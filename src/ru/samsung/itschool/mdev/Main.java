@@ -2,20 +2,32 @@ package ru.samsung.itschool.mdev;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // [+][-][+][-]
-        new MyThread("+").start();
-        new MyThread("-").start();
+        MyThread thread1 = new MyThread("+");
+        thread1.start();
+        MyThread thread2 = new MyThread("-");
+        thread2.start();
+        Thread.sleep(200);
+        thread1.setFlag(false);
+        thread1.join(); // ожидает завершение потока
+        test("1 stopped!");
     }
 
+    public static Object key = new Object();
     // "тяжелый"
     public static void test(String message) {
+
         try {
-            System.out.print("[");
-            Thread.sleep(1000);
-            System.out.print(message);
-            Thread.sleep(1000);
-            System.out.print("]");
+            synchronized (key) {
+                System.out.print("[");
+                Thread.sleep(500);
+                System.out.print(message);
+                Thread.sleep(500);
+                System.out.print("]");
+               // key.notify(); // возобновление потока
+               // key.wait(); // поток в режим ожидания
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -24,14 +36,19 @@ public class Main {
 }
 class MyThread extends Thread {
     private String mess;
+    private boolean flag = true;
 
     MyThread(String m) {
         this.mess = m;
     }
 
+    public void setFlag(boolean flag) {
+        this.flag = flag;
+    }
+
     @Override
     public void run() {
-        while(true) {
+        while(flag) {
             Main.test(this.mess);
         }
     }
